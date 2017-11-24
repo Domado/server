@@ -7,7 +7,7 @@ myApp.dashboard = (function($) {
         _start = Date.now();
         _template = $('#server-template').html();
         $_container = $('#server-container').html('');
-        $_mainstatus = $('#maintitle').html('<i class=\"glyphicon glyphicon-fire\"></i> Loading...');
+        $_mainstatus = $('#maintitle').html('<i class=\"glyphicon glyphicon-fire\"></i> 加载中...');
         $_mainstatusSyle = $("#mianstdiv").css("background",'linear-gradient(#f0ffb6, #98a8a0);');
         $_servertitle = $('#server-title').html('');
         //$_prograss = $('.loading');
@@ -70,7 +70,7 @@ myApp.dashboard = (function($) {
                     changeStatus("error");
                 }
                 //strHtml += "<h4>数据库: <span class=\"label label-default\">"+data.数据库 +"</span></h4>";
-                strHtml += "<hr><h4>更新时间: <span class=\"label label-info\">"+data.last_update +"</span></h5>";  
+                strHtml += "<hr><h4><span class=\"label label-info\">"+data.last_update +"</span></h5>";  
                 changeServerInfo(strHtml);
              },
              error: function(){
@@ -289,12 +289,13 @@ placeServer(str.monitors.monitor[item], ids);
             if (uptimes[a] >= 99.97) {
                 uptimeb[a] = "可用率 100%";
             } else if (uptimes[a] <= 0) {
-                uptimeb[a] = "可用率 0.00%<br>故障 " + (a == uptimes.length - 1 ? '720 小时' : '24 小时');
+                uptimeb[a] = "不可用 <br>故障 " + (a == uptimes.length - 1 ? '720 小时' : '24 小时');
             } else if (tm < 60) {
                 uptimeb[a] = "可用率 " + new Number(uptimes[a]).toFixed(2) + "%<br>故障 " + new Number(tm).toFixed(0) + " 分钟";
             } else {
                 uptimeb[a] = "可用率 " + new Number(uptimes[a]).toFixed(2) + "%<br>故障 " + new Number(th).toFixed(1) + " 小时";
             }
+			
         }
         //uptimes.push(data.alltimeuptimeratio);
         data.charts = [{
