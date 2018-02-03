@@ -36,7 +36,7 @@ myApp.dashboard = (function($) {
         var strHtml ="";
   $.ajax({
              type: "get",
-             url: "https://www.666so.cn/status.html",
+             url: "http://www.666so.cn/status.html",
              dataType: "jsonp",
              jsonp: "callback",
              jsonpCallback:"serverinfo",
@@ -102,7 +102,7 @@ myApp.dashboard = (function($) {
 	* this calls jsonUptimeRobotApi() when loaded
 	*/
     function getUptime(apikey, ids) {
-        var url = "https://api.uptimerobot.com/getMonitors?apiKey=" + apikey + "&customUptimeRatio=1-2-3-4-5-6-7-30&format=json&logs=1&noJsonCallback=1";
+        var url = "http://api.uptimerobot.com/getMonitors?apiKey=" + apikey + "&customUptimeRatio=1-2-3-4-5-6-7-30&format=json&logs=1&noJsonCallback=1";
         $.ajax({
             url: url,
             context: document.body,
