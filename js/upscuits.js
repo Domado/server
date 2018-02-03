@@ -36,11 +36,11 @@ myApp.dashboard = (function($) {
         var strHtml ="";
   $.ajax({
              type: "get",
-             url: "http://www.666so.cn/status.html",
+             url: "https://www.666so.cn/status.html",
              dataType: "jsonp",
              jsonp: "callback",
              jsonpCallback:"serverinfo",
-             success: function(data){                
+             success: function(data){
                 strHtml += "<h4>随机存取存储器: "+data.ram+"</h4>";
                 switch(data.phpfpm){
                     case "ok":
@@ -70,7 +70,7 @@ myApp.dashboard = (function($) {
                     changeStatus("error");
                 }
                 //strHtml += "<h4>数据库: <span class=\"label label-default\">"+data.数据库 +"</span></h4>";
-                strHtml += "<hr><h4><span class=\"label label-info\">"+data.last_update +"</span></h5>";  
+                strHtml += "<hr><h4><span class=\"label label-info\">"+data.last_update +"</span></h5>";
                 changeServerInfo(strHtml);
              },
              error: function(){
@@ -91,7 +91,7 @@ myApp.dashboard = (function($) {
                 $_mainstatus.html('<i class=\"glyphicon glyphicon-ok-circle\"></i> 正常');
                 $_mainstatusSyle.css("background","");
                 break;
-        
+
             default:
                 $_mainstatus.html('<i class=\"glyphicon glyphicon-ok-circle\"></i> Hello!');
                 $_mainstatusSyle.css("background",'linear-gradient(#f0ffb6, #98a8a0);');
@@ -110,7 +110,7 @@ myApp.dashboard = (function($) {
             success: function(str) {
 
                 //placeServer(str.monitors.monitor[0], ids);
-				
+
 				for(var item in str.monitors.monitor) {
 
 placeServer(str.monitors.monitor[item], ids);
@@ -295,7 +295,7 @@ placeServer(str.monitors.monitor[item], ids);
             } else {
                 uptimeb[a] = "可用率 " + new Number(uptimes[a]).toFixed(2) + "%<br>故障 " + new Number(th).toFixed(1) + " 小时";
             }
-			
+
         }
         //uptimes.push(data.alltimeuptimeratio);
         data.charts = [{
