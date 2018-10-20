@@ -36,7 +36,7 @@ myApp.dashboard = (function($) {
         var strHtml ="";
   $.ajax({
              type: "get",
-             url: "https://www.666so.cn/status.html",
+             url: "http://www.666so.cn/status.html",
              dataType: "jsonp",
              jsonp: "callback",
              jsonpCallback:"serverinfo",
@@ -146,7 +146,7 @@ placeServer(str.monitors.monitor[item], ids);
             error = true;
             break;
         case 9:
-            data.statustxt = "故障";
+            data.statustxt = "超负荷";
             data.statusicon = "remove";
             data.label = "danger";
             data.alert = "danger";
@@ -289,11 +289,11 @@ placeServer(str.monitors.monitor[item], ids);
             if (uptimes[a] >= 99.97) {
                 uptimeb[a] = "可用率 100%";
             } else if (uptimes[a] <= 0) {
-                uptimeb[a] = "不可用 <br>故障 " + (a == uptimes.length - 1 ? '720 小时' : '24 小时');
+                uptimeb[a] = "不可用 <br>超负荷 " + (a == uptimes.length - 1 ? '720 小时' : '24 小时');
             } else if (tm < 60) {
-                uptimeb[a] = "可用率 " + new Number(uptimes[a]).toFixed(2) + "%<br>故障 " + new Number(tm).toFixed(0) + " 分钟";
+                uptimeb[a] = "可用率 " + new Number(uptimes[a]).toFixed(2) + "%<br>超负荷 " + new Number(tm).toFixed(0) + " 分钟";
             } else {
-                uptimeb[a] = "可用率 " + new Number(uptimes[a]).toFixed(2) + "%<br>故障 " + new Number(th).toFixed(1) + " 小时";
+                uptimeb[a] = "可用率 " + new Number(uptimes[a]).toFixed(2) + "%<br>超负荷 " + new Number(th).toFixed(1) + " 小时";
             }
 
         }
@@ -409,7 +409,7 @@ placeServer(str.monitors.monitor[item], ids);
     function Type2Word(t, icon) {
         switch (t) {
         case 1:
-            return (icon ? "<span class=\"glyphicon glyphicon-remove-sign\"></span> " : "") + "故障";
+            return (icon ? "<span class=\"glyphicon glyphicon-remove-sign\"></span> " : "") + "超负荷";
         case 2:
             return (icon ? "<span class=\"glyphicon glyphicon-ok-sign\"></span> " : "") + "正常";
             //case 99:
