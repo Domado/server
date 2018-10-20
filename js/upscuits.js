@@ -36,7 +36,7 @@ myApp.dashboard = (function($) {
         var strHtml ="";
   $.ajax({
              type: "get",
-             url: "http://www.666so.cn/status.html",
+             url: "https://www.666so.cn/status.html",
              dataType: "jsonp",
              jsonp: "callback",
              jsonpCallback:"serverinfo",
