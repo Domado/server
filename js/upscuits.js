@@ -289,7 +289,7 @@ placeServer(str.monitors.monitor[item], ids);
             if (uptimes[a] >= 99.97) {
                 uptimeb[a] = "可用率 100%";
             } else if (uptimes[a] <= 0) {
-                uptimeb[a] = "不可用 <br>超负荷 " + (a == uptimes.length - 1 ? '720 小时' : '24 小时');
+                uptimeb[a] = "超负荷 <br>超负荷 " + (a == uptimes.length - 1 ? '720 小时' : '24 小时');
             } else if (tm < 60) {
                 uptimeb[a] = "可用率 " + new Number(uptimes[a]).toFixed(2) + "%<br>超负荷 " + new Number(tm).toFixed(0) + " 分钟";
             } else {
@@ -437,7 +437,7 @@ placeServer(str.monitors.monitor[item], ids);
     }
     function getUptimeSign() {
         var upt = this.uptimes;
-        if (upt >= 99.90) {
+        if (upt >= 99.00) {
             return "ok-sign";
         } else if (upt >= 98.00) {
             return "exclamation-sign";
