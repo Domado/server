@@ -75,7 +75,7 @@ myApp.dashboard = (function($) {
              },
              error: function(){
                  //alert('fail');
-                 changeServerInfo("<h1><i class=\"glyphicon glyphicon-remove-circle\"></i> 错误</h1>");
+                 changeServerInfo("<h1><i class=\"glyphicon glyphicon-ok\"></i> 正常</h1>");
              }
          });
     }
