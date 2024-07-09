@@ -100,8 +100,7 @@ myApp.dashboard = (function($) {
     function getUptime(ids) {
         $.ajax({
             type: "GET",
-            url: "https://data.666so.cn/api/uptimebot/
-data.666so.cn/api/uptimebot/", 
+            url: "https://data.666so.cn/api/uptimebot/", 
             dataType: "json",
             success: function(response) {
                 for (var item in response.monitors) {
