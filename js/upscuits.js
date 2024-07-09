@@ -1,15 +1,18 @@
 window.myApp = window.myApp || {};
 myApp.dashboard = (function($) {
-    var _template = "", _loaded = 0, _intervalId = 0, _start = Date.now(), _refresh = ((typeof (__refresh) == "number") ? __refresh : 300), $_container = {}, 
+    var _template = "", _loaded = 0, _intervalId = 0, _start = Date.now(), _refresh = ((typeof (__refresh) == "number") ? __refresh : 300), $_container = {}, //$_prograss = {},
+    //$_countdown = {},
     $_lastUpdate = {}, $_servertitle = {}, showarr = [], tmpdate, datestr = "", error = false;
-
+    
     function init() {
         _start = Date.now();
         _template = $('#server-template').html();
         $_container = $('#server-container').html('');
         $_mainstatus = $('#maintitle').html('<i class="glyphicon glyphicon-fire"></i> 加载中...');
-        $_mainstatusSyle = $("#mianstdiv").css("background", 'linear-gradient(#f0ffb6, #98a8a0);');
+        $_mainstatusSyle = $("#mianstdiv").css("background",'linear-gradient(#f0ffb6, #98a8a0);');
         $_servertitle = $('#server-title').html('');
+        //$_prograss = $('.loading');
+        //$_countdown = $('.countdown');
         $_lastUpdate = $('#last-update');
         showarr = [];
         getServerinfo();
@@ -22,27 +25,27 @@ myApp.dashboard = (function($) {
         }
         error = false;
         for (var i in __apiKeys) {
-            getUptime(__apiKeys[i], i);
+            getUptime(i);
         }
         _intervalId = setInterval(countdown, 1000);
     }
 
-    function changeServerInfo(content) {
+    function changeServerInfo(content){
         $_serverinfo = $('#serverinfo').html('');
         $_serverinfo.append(content);
     }
 
-    function getServerinfo() {
-        var strHtml = "";
+    function getServerinfo(){
+        var strHtml ="";
         $.ajax({
-            type: "get",
+            type: "GET",
             url: "https://www.666so.cn/status.html",
             dataType: "jsonp",
             jsonp: "callback",
             jsonpCallback: "serverinfo",
-            success: function(data) {
-                strHtml += "<h4>随机存取存储器: " + data.ram + "</h4>";
-                switch (data.phpfpm) {
+            success: function(data){
+                strHtml += "<h4>随机存取存储器: "+data.ram+"</h4>";
+                switch(data.phpfpm){
                     case "ok":
                         strHtml += "<h4>进程管理器: <span class=\"label label-success\"><i class=\"glyphicon glyphicon-ok\"></i> 正常</span></h4>";
                         changeStatus("normal");
@@ -55,7 +58,7 @@ myApp.dashboard = (function($) {
                         strHtml += "<h4>进程管理器: <span class=\"label label-primary\"><i class=\"glyphicon glyphicon-warning-sign\"></i> 无法读取</span></h4>";
                         changeStatus("error");
                 }
-                switch (data.mysql) {
+                switch(data.mysql){
                     case "ok":
                         strHtml += "<h4>数据库: <span class=\"label label-success\"><i class=\"glyphicon glyphicon-ok\"></i> 正常</span></h4>";
                         changeStatus("normal");
@@ -68,47 +71,45 @@ myApp.dashboard = (function($) {
                         strHtml += "<h4>数据库: <span class=\"label label-primary\"><i class=\"glyphicon glyphicon-warning-sign\"></i> 无法读取</span></h4>";
                         changeStatus("error");
                 }
-                strHtml += "<hr><h4><span class=\"label label-info\">" + data.last_update + "</span></h5>";
+                strHtml += "<hr><h4><span class=\"label label-info\">"+data.last_update+"</span></h5>";
                 changeServerInfo(strHtml);
-            },
-            error: function() {
-                changeServerInfo("<h1><i class=\"glyphicon glyphicon-ok\"></i> 正常</h1>");
-            }
-        });
+             },
+             error: function(){
+                 changeServerInfo("<h1><i class=\"glyphicon glyphicon-ok\"></i> 正常</h1>");
+             }
+         });
     }
 
-    function changeStatus(status) {
+    function changeStatus(status){
         switch (status) {
             case "error":
                 $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 不太好');
-                $_mainstatusSyle.css("background", 'linear-gradient(red, #ffb6b6);');
+                $_mainstatusSyle.css("background",'linear-gradient(red, #ffb6b6);');
                 break;
             case "normal":
                 $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 正常');
-                $_mainstatusSyle.css("background", "");
+                $_mainstatusSyle.css("background","");
                 break;
             default:
                 $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> Hello!');
-                $_mainstatusSyle.css("background", 'linear-gradient(#f0ffb6, #98a8a0);');
+                $_mainstatusSyle.css("background",'linear-gradient(#f0ffb6, #98a8a0);');
                 break;
         }
     }
 
-    function getUptime(apikey, ids) {
-        var url = "https://api.uptimerobot.com/v2/getMonitors";
+    function getUptime(ids) {
         $.ajax({
-            type: "post",
-            url: url,
-            data: {
-                "api_key": apikey,
-                "custom_uptime_ratios": "1-2-3-4-5-6-7-30",
-                "format": "json"
-            },
+            type: "GET",
+            url: "https://data.666so.cn/api/uptimebot/
+data.666so.cn/api/uptimebot/", 
             dataType: "json",
-            success: function(str) {
-                for (var item in str.monitors) {
-                    placeServer(str.monitors[item], ids);
+            success: function(response) {
+                for (var item in response.monitors) {
+                    placeServer(response.monitors[item], ids);
                 }
+            },
+            error: function(xhr, status, error) {
+                console.error("Error: " + error);
             }
         });
     }
@@ -116,146 +117,179 @@ myApp.dashboard = (function($) {
     function placeServer(data, ids) {
         data.alert = "";
         switch (parseInt(data.status, 10)) {
-            case 0:
-                data.statustxt = "未知";
-                data.statusicon = "question-sign";
-                data.label = "default";
-                break;
-            case 1:
-                data.statustxt = "未知";
-                data.statusicon = "question-sign";
-                data.label = "default";
-                break;
-            case 2:
-                data.statustxt = "正常";
-                data.statusicon = "ok";
-                data.label = "success";
-                data.alert = "";
-                break;
-            case 8:
-                data.statustxt = "异常";
-                data.statusicon = "exclamation-sign";
-                data.label = "warning";
-                data.alert = "warning";
-                error = true;
-                break;
-            case 9:
-                data.statustxt = "超负荷";
-                data.statusicon = "remove";
-                data.label = "danger";
-                data.alert = "danger";
-                error = true;
-                break;
+        case 0:
+            data.statustxt = "未知";
+            data.statusicon = "question-sign";
+            data.label = "default";
+            break;
+        case 1:
+            data.statustxt = "未知";
+            data.statusicon = "question-sign";
+            data.label = "default";
+            break;
+        case 2:
+            data.statustxt = "正常";
+            data.statusicon = "ok";
+            data.label = "success";
+            data.alert = "";
+            break;
+        case 8:
+            data.statustxt = "异常";
+            data.statusicon = "exclamation-sign";
+            data.label = "warning";
+            data.alert = "warning";
+            error = true;
+            break;
+        case 9:
+            data.statustxt = "超负荷";
+            data.statusicon = "remove";
+            data.label = "danger";
+            data.alert = "danger";
+            error = true;
+            break;
         }
-
-        var lastMonth = Date.now() - 30 * 24 * 60 * 60 * 1000;
-        data.log = data.logs.filter(log => new Date(log.datetime).getTime() >= lastMonth);
-
-        var endtime, starttime, period, fin = [], lastlen = 1;
+        
+        var lastMonth = Date.parse('-1month');
+        for (var i in data.log) {
+            var log = data.log[i]
+              , dateTime = Date.parse(log.datetime.replace(/\/(\d\d) /, '/20$1 '));
+            if (dateTime < lastMonth) {
+                data.log.splice(i, i + 1);
+            } else {
+                data.log[i].datetime = dateTime;
+            }
+        }
+        data.log = $.merge([], data.log);
+        
+        var endtime, endtype, starttime, starttype, fintime, period, fin = [], lastlen = 1;
         period = 86400000 * 1;
-        endtime = Date.now();
-        starttime = endtime - period;
-
+        endtime = Date.parse(new Date().toString());
+        fintime = endtime - period;
+        starttime = fintime;
         if (!data.log.length) {
             switch (parseInt(data.status, 10)) {
-                case 2:
-                    starttype = 2;
-                    break;
-                case 8:
-                case 9:
-                    starttype = 1;
-                    break;
-                default:
-                    starttype = 0;
+            case 2:
+                starttype = 2;
+                break;
+            case 8:
+            case 9:
+                starttype = 1;
+                break;
+            default:
+                starttype = 0;
             }
             fin.push({
                 type: starttype,
                 len: 1,
-                left: starttime,
+                left: fintime,
                 right: endtime
-            });
+            })
         } else {
             for (var r = 0; r < data.log.length; r++) {
-                starttime = new Date(data.log[r].datetime).getTime();
-                if (starttime < endtime - period) {
-                    starttime = endtime - period;
+                starttime = data.log[r].datetime;
+                if (starttime < fintime) {
+                    starttime = fintime;
                 }
                 endtype = data.log[r].type;
                 switch (parseInt(endtype, 10)) {
-                    case 1:
-                        endtype = 1;
-                        break;
-                    case 2:
-                        endtype = 2;
-                        break;
-                    default:
-                        endtype = 0;
-                }
-                lastlen -= (endtime - starttime) / period;
-                if (fin.length > 0 && fin[fin.length - 1].type == endtype) {
-                    fin[fin.length - 1].len += (endtime - starttime) / period;
-                    fin[fin.length - 1].left = starttime;
-                } else {
-                    fin.push({
-                        type: endtype,
-                        len: (endtime - starttime) / period,
-                        left: starttime,
-                        right: endtime
-                    });
-                }
-                endtime = starttime;
-                if (starttime <= endtime - period) {
+                case 1:
+                    endtype = 1;
+                    break;
+                case 2:
+                    endtype = 0;
                     break;
                 }
-            }
-            if (starttime > endtime - period) {
-                switch (parseInt(endtype, 10)) {
-                    case 1:
-                        starttype = 2;
-                        break;
-                    case 2:
-                        starttype = 1;
-                        break;
-                    default:
-                        starttype = 0;
-                }
-                if (fin.length > 0 && fin[fin.length - 1].type == endtype) {
-                    fin[fin.length - 1].len += lastlen;
-                    fin[fin.length - 1].left = endtime - period;
+                if (starttime - endtime < 0) {
+                    endtime = starttime;
+                    if (starttype == endtype) {
+                        lastlen++;
+                    } else {
+                        fin.push({
+                            type: starttype,
+                            len: lastlen,
+                            left: endtime,
+                            right: endtime + period * lastlen
+                        });
+                        lastlen = 1;
+                    }
                 } else {
-                    fin.push({
-                        type: endtype,
-                        len: lastlen,
-                        left: endtime - period,
-                        right: endtime
-                    });
+                    endtime = starttime;
+                    if (starttype == endtype) {
+                        lastlen++;
+                    } else {
+                        fin.push({
+                            type: starttype,
+                            len: lastlen,
+                            left: endtime,
+                            right: endtime + period * lastlen
+                        });
+                        lastlen = 1;
+                    }
                 }
+                starttype = endtype;
             }
+            fin.push({
+                type: starttype,
+                len: lastlen,
+                left: starttime,
+                right: endtime
+            });
         }
-        data.statuses = fin;
-        var _item = ich.item(data);
-        $_container.append(_item);
+        
+        var $tpl = $(_template)
+          , $badge = $tpl.find('.badge')
+          , $log = $tpl.find('.log')
+          , $panel = $tpl.find('.panel-body');
+        
+        $tpl.find('.panel-heading').addClass('panel-' + data.label);
+        $tpl.find('.panel-title').html(data.friendly_name);
+        $tpl.find('.uptime').html('<i class="glyphicon glyphicon-' + data.statusicon + '"></i> ' + data.statustxt);
+        $tpl.find('.uptime').addClass('label-' + data.label);
+        for (var f = 0; f < fin.length; f++) {
+            if (!fin[f].len)
+                continue;
+            $panel.append('<div class="col-xs-' + (fin[f].len < 1 ? 1 : fin[f].len) + ' ' + (fin[f].type ? 'bg-danger' : 'bg-success') + '"></div>');
+        }
+        for (var i = 0; i < data.log.length; i++) {
+            $log.append('<tr><td>' + new Date(data.log[i].datetime).toLocaleString() + '</td><td>' + (data.log[i].type == 2 ? '<span class="label label-success">恢复</span>' : '<span class="label label-danger">异常</span>') + '</td><td>' + data.log[i].duration + '</td></tr>');
+        }
+        $tpl.find('.panel-footer').html(data.note);
+        
+        $_container.append($tpl);
+        showarr.push($tpl);
+        _loaded++;
+        if (_loaded == __apiKeys.length) {
+            finish();
+        }
+    }
+
+    function finish() {
+        if (error) {
+            $_mainstatus.html('<i class="glyphicon glyphicon-remove-circle"></i> 错误');
+            $_mainstatusSyle.css("background",'linear-gradient(red, #ffb6b6);');
+        } else {
+            $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 正常');
+            $_mainstatusSyle.css("background",'');
+        }
+        _start = Date.now();
+        $_lastUpdate.html('<i class="glyphicon glyphicon-time"></i> 最后更新: ' + new Date().toLocaleString());
+        _intervalId = setInterval(countdown, 1000);
     }
 
     function countdown() {
-        var past = Date.now() - _start;
-        var remain = _refresh * 1000 - past;
-        if (remain <= 0) {
+        var left = _refresh - Math.round((Date.now() - _start) / 1000);
+        if (left <= 0) {
             clearInterval(_intervalId);
             init();
-            return;
+        } else {
+            //$$_countdown.html(left);
         }
-        var min = Math.floor(remain / 60000);
-        var sec = Math.floor(remain / 1000 % 60);
-        var str = ' ' + min + ':' + ((sec < 10) ? '0' + sec : sec);
-        $_lastUpdate.html(str);
     }
 
     return {
         init: init
     };
+
 })(jQuery);
 
-$(document).ready(function() {
-    myApp.dashboard.init();
-});
+jQuery(myApp.dashboard.init());
