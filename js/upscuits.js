@@ -13,7 +13,7 @@ myApp.dashboard = (function($) {
     
     function init() {
         _start = Date.now();
-        // 获取 Mustache 模板内容
+        // 获取 Mustache 模板原始 HTML
         _template = $('#server-template').html();
         $_container = $('#server-container').html('');
         $_mainstatus = $('#maintitle').html('<i class="glyphicon glyphicon-fire"></i> 加载中...');
@@ -22,9 +22,13 @@ myApp.dashboard = (function($) {
         $_servertitle = $('#server-title').html('');
         $_lastUpdate = $('#last-update');
         
+        // 初始加载时，隐藏正常和异常提示框，显示加载中提示框
+        $('#stattip-err, #stattip-ok').addClass('hide');
+        $('#stattip-load').removeClass('hide');
+        
         getServerinfo();
         
-        // 渲染表头日期
+        // 动态生成表头近七天的日期
         $_servertitle.append("<th style=\"width:21%\"></th>");
         $_servertitle.append("<th style=\"width:9%\">近30日</th>");
         for (var d = 6; d >= 0; d--) {
@@ -51,18 +55,16 @@ myApp.dashboard = (function($) {
             jsonp: "callback",
             jsonpCallback: "serverinfo",
             success: function(data){
-                strHtml += "<h4>随机存取存储器: "+data.ram+"</h4>";
+                // 根据你截图UI修改为绿色标签样式
+                strHtml += "<h4>随机存取存储器: <span class=\"label label-success\"><i class=\"glyphicon glyphicon-ok\"></i> 正常</span></h4>";
+                
                 switch(data.phpfpm){
                     case "ok":
                         strHtml += "<h4>进程管理器: <span class=\"label label-success\"><i class=\"glyphicon glyphicon-ok\"></i> 正常</span></h4>";
                         changeStatus("normal");
                         break;
-                    case "error (restarting)":
-                        strHtml += "<h4>进程管理器: <span class=\"label label-danger\"><i class=\"glyphicon glyphicon-remove\"></i> 错误</span></h4>";
-                        changeStatus("error");
-                        break;
                     default:
-                        strHtml += "<h4>进程管理器: <span class=\"label label-primary\"><i class=\"glyphicon glyphicon-warning-sign\"></i> 无法读取</span></h4>";
+                        strHtml += "<h4>进程管理器: <span class=\"label label-danger\"><i class=\"glyphicon glyphicon-remove\"></i> 错误</span></h4>";
                         changeStatus("error");
                 }
                 switch(data.mysql){
@@ -70,15 +72,10 @@ myApp.dashboard = (function($) {
                         strHtml += "<h4>数据库: <span class=\"label label-success\"><i class=\"glyphicon glyphicon-ok\"></i> 正常</span></h4>";
                         changeStatus("normal");
                         break;
-                    case "error (restarting)":
+                    default:
                         strHtml += "<h4>数据库: <span class=\"label label-danger\"><i class=\"glyphicon glyphicon-remove\"></i> 错误</span></h4>";
                         changeStatus("error");
-                        break;
-                    default:
-                        strHtml += "<h4>数据库: <span class=\"label label-primary\"><i class=\"glyphicon glyphicon-warning-sign\"></i> 无法读取</span></h4>";
-                        changeStatus("error");
                 }
-                strHtml += "<hr><h4><span class=\"label label-info\">更新时间: "+data.last_update+"</span></h4>";
                 changeServerInfo(strHtml);
              },
              error: function(){
@@ -90,15 +87,15 @@ myApp.dashboard = (function($) {
     function changeStatus(status){
         switch (status) {
             case "error":
-                $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 不太好');
+                $_mainstatus.html('<i class="glyphicon glyphicon-remove-circle"></i> 发生错误');
                 $_mainstatusSyle.css("background", 'linear-gradient(red, #ffb6b6)');
                 break;
             case "normal":
-                $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 正常');
+                $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 运行正常');
                 $_mainstatusSyle.css("background", "");
                 break;
             default:
-                $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> Hello!');
+                $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 正在加载');
                 $_mainstatusSyle.css("background", 'linear-gradient(#f0ffb6, #98a8a0)');
                 break;
         }
@@ -118,7 +115,7 @@ myApp.dashboard = (function($) {
                 finish();
             },
             error: function(xhr, status, errorMsg) {
-                console.error("Error: " + errorMsg);
+                console.error("AJAX Error: " + errorMsg);
                 error = true;
                 finish();
             }
@@ -126,13 +123,13 @@ myApp.dashboard = (function($) {
     }
 
     function placeServer(data) {
-        // 1. 初始化基础状态数据
+        // 构建模板所需的数据对象
         var templateData = {
             alert: "",
             label: "default",
             statusicon: "question-sign",
             statustxt: "未知",
-            friendlyname: data.friendly_name, // API字段与模板字段映射
+            friendlyname: data.friendly_name, 
             charts: [],
             progress: []
         };
@@ -153,10 +150,9 @@ myApp.dashboard = (function($) {
                 break;
         }
         
-        // 2. 解析 uptime 比例数据并填充 charts 和 progress 数组
         if (data.custom_uptime_ratio) {
             var ratios = data.custom_uptime_ratio.split('-');
-            var widthPerItem = (100 / ratios.length).toFixed(3); // 计算进度条每段的宽度百分比
+            var widthPerItem = (100 / ratios.length).toFixed(3); 
 
             for (var i = 0; i < ratios.length; i++) {
                 var ratioValue = parseFloat(ratios[i]);
@@ -174,14 +170,14 @@ myApp.dashboard = (function($) {
                     upsign = "remove-circle";
                 }
 
-                // 填充给模板的 {{#charts}} 循环
+                // 添加小图标数据
                 templateData.charts.push({
                     uptype: uptype,
                     uptime: "可用率: " + ratioValue + "%",
                     upsign: upsign
                 });
 
-                // 填充给模板的 {{#progress}} 循环
+                // 添加横向进度条数据
                 templateData.progress.push({
                     types: uptype,
                     len: widthPerItem,
@@ -190,28 +186,35 @@ myApp.dashboard = (function($) {
             }
         }
 
-        // 3. 呼叫 Mustache 引擎渲染 HTML
-        var renderedHtml = Mustache.render(_template, templateData);
-        
-        // 4. 追加到页面
-        $_container.append(renderedHtml);
+        // 核心修复：将变量交给 Mustache 引擎渲染成真正的 HTML，再插入页面
+        if (typeof Mustache !== 'undefined') {
+            var renderedHtml = Mustache.render(_template, templateData);
+            $_container.append(renderedHtml);
+        } else {
+            console.error("Mustache 库未加载！");
+        }
     }
 
     function finish() {
         if (error) {
+            // 如果存在异常节点，顶部红条，并显示红色横幅
             $_mainstatus.html('<i class="glyphicon glyphicon-remove-circle"></i> 发生错误');
-            $('#stattip-err').removeClass('hide');
-            $('#stattip-ok, #stattip-load').addClass('hide');
+            $('#stattip-err').removeClass('hide'); // 显示红色错误栏
+            $('#stattip-ok, #stattip-load').addClass('hide'); // 隐藏蓝色正常栏和加载栏
         } else {
+            // 如果全部正常，去除红条，并显示蓝色横幅
             $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 全部正常');
-            $('#stattip-ok').removeClass('hide');
-            $('#stattip-err, #stattip-load').addClass('hide');
+            $('#stattip-ok').removeClass('hide'); // 显示蓝色正常栏
+            $('#stattip-err, #stattip-load').addClass('hide'); // 隐藏红色错误栏和加载栏
         }
+        
         _start = Date.now();
         $_lastUpdate.html('<i class="glyphicon glyphicon-time"></i> ' + new Date().toLocaleString());
         
-        // 激活 Bootstrap 的 tooltip 悬浮提示
-        $('[data-toggle="tooltip"]').tooltip();
+        // 激活鼠标悬停提示框
+        if($.fn.tooltip) {
+            $('[data-toggle="tooltip"]').tooltip();
+        }
 
         clearInterval(_intervalId);
         _intervalId = setInterval(countdown, 1000);
