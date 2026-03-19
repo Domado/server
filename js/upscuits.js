@@ -1,21 +1,33 @@
 window.myApp = window.myApp || {};
 myApp.dashboard = (function($) {
-    var _template = "", _loaded = 0, _intervalId = 0, _start = Date.now(), _refresh = ((typeof (__refresh) == "number") ? __refresh : 300), $_container = {}, //$_prograss = {},
-    //$_countdown = {},
-    $_lastUpdate = {}, $_servertitle = {}, showarr = [], tmpdate, datestr = "", error = false;
+    var _template = "", 
+        _intervalId = 0, 
+        _start = Date.now(), 
+        _refresh = ((typeof (__refresh) == "number") ? __refresh : 300), 
+        $_container = {}, 
+        $_mainstatus = {}, // 修复：补充声明
+        $_mainstatusSyle = {}, // 修复：补充声明
+        $_lastUpdate = {}, 
+        $_servertitle = {}, 
+        showarr = [], 
+        tmpdate, 
+        datestr = "", 
+        error = false;
     
     function init() {
         _start = Date.now();
         _template = $('#server-template').html();
         $_container = $('#server-container').html('');
         $_mainstatus = $('#maintitle').html('<i class="glyphicon glyphicon-fire"></i> 加载中...');
-        $_mainstatusSyle = $("#mianstdiv").css("background",'linear-gradient(#f0ffb6, #98a8a0);');
+        
+        // 修复：移除 css 值末尾的非法分号
+        $_mainstatusSyle = $("#mianstdiv").css("background", 'linear-gradient(#f0ffb6, #98a8a0)'); 
         $_servertitle = $('#server-title').html('');
-        //$_prograss = $('.loading');
-        //$_countdown = $('.countdown');
         $_lastUpdate = $('#last-update');
         showarr = [];
+        
         getServerinfo();
+        
         $_servertitle.append("<th style=\"width:21%\"></th>");
         $_servertitle.append("<th style=\"width:9%\">近30日</th>");
         for (var d = 6; d >= 0; d--) {
@@ -23,15 +35,16 @@ myApp.dashboard = (function($) {
             datestr = (tmpdate.getMonth() + 1) + "-" + tmpdate.getDate();
             $_servertitle.append("<th style=\"width:10%\">" + datestr + "</th>");
         }
+        
         error = false;
-        for (var i in __apiKeys) {
-            getUptime(i);
-        }
-        _intervalId = setInterval(countdown, 1000);
+        
+        // 修复：因为不需要 ids 参数且一次性返回所有数据，直接调用一次即可
+        getUptime();
     }
 
     function changeServerInfo(content){
-        $_serverinfo = $('#serverinfo').html('');
+        // 修复：添加 var 防止变量泄露到全局
+        var $_serverinfo = $('#serverinfo').html('');
         $_serverinfo.append(content);
     }
 
@@ -64,7 +77,7 @@ myApp.dashboard = (function($) {
                         changeStatus("normal");
                         break;
                     case "error (restarting)":
-                        strHtml += "<h4>数据库: <span class=\"label label-success\"><i class=\"glyphicon glyphicon-remove\"></i> 错误</span></h4>";
+                        strHtml += "<h4>数据库: <span class=\"label label-danger\"><i class=\"glyphicon glyphicon-remove\"></i> 错误</span></h4>";
                         changeStatus("error");
                         break;
                     default:
@@ -84,194 +97,119 @@ myApp.dashboard = (function($) {
         switch (status) {
             case "error":
                 $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 不太好');
-                $_mainstatusSyle.css("background",'linear-gradient(red, #ffb6b6);');
+                $_mainstatusSyle.css("background", 'linear-gradient(red, #ffb6b6)');
                 break;
             case "normal":
                 $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 正常');
-                $_mainstatusSyle.css("background","");
+                $_mainstatusSyle.css("background", "");
                 break;
             default:
                 $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> Hello!');
-                $_mainstatusSyle.css("background",'linear-gradient(#f0ffb6, #98a8a0);');
+                $_mainstatusSyle.css("background", 'linear-gradient(#f0ffb6, #98a8a0)');
                 break;
         }
     }
 
-    function getUptime(ids) {
+    function getUptime() {
         $.ajax({
             type: "GET",
-            url: "https://data.666so.cn/api/uptimebot/", 
+            url: "https://data.666so.cn/api/uptimebot/", // 移除 ids 参数依赖
             dataType: "json",
             success: function(response) {
-                for (var item in response.monitors) {
-                    placeServer(response.monitors[item], ids);
+                if (response && response.monitors) {
+                    for (var i = 0; i < response.monitors.length; i++) {
+                        placeServer(response.monitors[i]);
+                    }
                 }
+                // 所有数据处理完毕后结束加载状态
+                finish();
             },
-            error: function(xhr, status, error) {
-                console.error("Error: " + error);
+            error: function(xhr, status, errorMsg) {
+                console.error("Error: " + errorMsg);
+                error = true;
+                finish();
             }
         });
     }
 
-    function placeServer(data, ids) {
+    function placeServer(data) {
         data.alert = "";
         switch (parseInt(data.status, 10)) {
-        case 0:
-            data.statustxt = "未知";
-            data.statusicon = "question-sign";
-            data.label = "default";
-            break;
-        case 1:
-            data.statustxt = "未知";
-            data.statusicon = "question-sign";
-            data.label = "default";
-            break;
-        case 2:
-            data.statustxt = "正常";
-            data.statusicon = "ok";
-            data.label = "success";
-            data.alert = "";
-            break;
-        case 8:
-            data.statustxt = "异常";
-            data.statusicon = "exclamation-sign";
-            data.label = "warning";
-            data.alert = "warning";
-            error = true;
-            break;
-        case 9:
-            data.statustxt = "超负荷";
-            data.statusicon = "remove";
-            data.label = "danger";
-            data.alert = "danger";
-            error = true;
-            break;
-        }
-        
-        var lastMonth = Date.parse('-1month');
-        for (var i in data.log) {
-            var log = data.log[i]
-              , dateTime = Date.parse(log.datetime.replace(/\/(\d\d) /, '/20$1 '));
-            if (dateTime < lastMonth) {
-                data.log.splice(i, i + 1);
-            } else {
-                data.log[i].datetime = dateTime;
-            }
-        }
-        data.log = $.merge([], data.log);
-        
-        var endtime, endtype, starttime, starttype, fintime, period, fin = [], lastlen = 1;
-        period = 86400000 * 1;
-        endtime = Date.parse(new Date().toString());
-        fintime = endtime - period;
-        starttime = fintime;
-        if (!data.log.length) {
-            switch (parseInt(data.status, 10)) {
+            case 0:
+            case 1:
+                data.statustxt = "未知";
+                data.statusicon = "question-sign";
+                data.label = "default";
+                break;
             case 2:
-                starttype = 2;
+                data.statustxt = "正常";
+                data.statusicon = "ok";
+                data.label = "success";
+                data.alert = "";
                 break;
             case 8:
             case 9:
-                starttype = 1;
+                data.statustxt = "异常";
+                data.statusicon = "remove"; // 更换为更醒目的图标
+                data.label = "danger";
+                data.alert = "danger";
+                error = true;
                 break;
-            default:
-                starttype = 0;
-            }
-            fin.push({
-                type: starttype,
-                len: 1,
-                left: fintime,
-                right: endtime
-            })
-        } else {
-            for (var r = 0; r < data.log.length; r++) {
-                starttime = data.log[r].datetime;
-                if (starttime < fintime) {
-                    starttime = fintime;
-                }
-                endtype = data.log[r].type;
-                switch (parseInt(endtype, 10)) {
-                case 1:
-                    endtype = 1;
-                    break;
-                case 2:
-                    endtype = 0;
-                    break;
-                }
-                if (starttime - endtime < 0) {
-                    endtime = starttime;
-                    if (starttype == endtype) {
-                        lastlen++;
-                    } else {
-                        fin.push({
-                            type: starttype,
-                            len: lastlen,
-                            left: endtime,
-                            right: endtime + period * lastlen
-                        });
-                        lastlen = 1;
-                    }
-                } else {
-                    endtime = starttime;
-                    if (starttype == endtype) {
-                        lastlen++;
-                    } else {
-                        fin.push({
-                            type: starttype,
-                            len: lastlen,
-                            left: endtime,
-                            right: endtime + period * lastlen
-                        });
-                        lastlen = 1;
-                    }
-                }
-                starttype = endtype;
-            }
-            fin.push({
-                type: starttype,
-                len: lastlen,
-                left: starttime,
-                right: endtime
-            });
         }
         
-        var $tpl = $(_template)
-          , $badge = $tpl.find('.badge')
-          , $log = $tpl.find('.log')
-          , $panel = $tpl.find('.panel-body');
+        var $tpl = $(_template),
+            $badge = $tpl.find('.badge'),
+            $log = $tpl.find('.log'),
+            $panel = $tpl.find('.panel-body');
         
         $tpl.find('.panel-heading').addClass('panel-' + data.label);
         $tpl.find('.panel-title').html(data.friendly_name);
         $tpl.find('.uptime').html('<i class="glyphicon glyphicon-' + data.statusicon + '"></i> ' + data.statustxt);
         $tpl.find('.uptime').addClass('label-' + data.label);
-        for (var f = 0; f < fin.length; f++) {
-            if (!fin[f].len)
-                continue;
-            $panel.append('<div class="col-xs-' + (fin[f].len < 1 ? 1 : fin[f].len) + ' ' + (fin[f].type ? 'bg-danger' : 'bg-success') + '"></div>');
+        
+        // 修复：由于没有 data.log，改为解析 custom_uptime_ratio 生成状态条
+        // 例如："100.000-100.000-100.000-100.000-100.000-100.000-100.000-99.988"
+        if (data.custom_uptime_ratio) {
+            var ratios = data.custom_uptime_ratio.split('-');
+            for (var f = 0; f < ratios.length; f++) {
+                var ratioValue = parseFloat(ratios[f]);
+                var bgClass = "bg-success"; // 默认绿色
+                
+                if (data.status === 0 || data.status === 1) {
+                    bgClass = "bg-default"; // 灰色：未知状态
+                } else if (ratioValue < 100 && ratioValue > 0) {
+                    bgClass = "bg-warning"; // 黄色：有过掉线
+                } else if (ratioValue === 0) {
+                    bgClass = "bg-danger"; // 红色：完全掉线
+                }
+
+                // 统一使用 col-xs-1（可能需要你根据前端排版在 CSS 中微调宽度）
+                $panel.append('<div class="col-xs-1 ' + bgClass + '" title="可用率: ' + ratioValue + '%"></div>');
+            }
         }
-        for (var i = 0; i < data.log.length; i++) {
-            $log.append('<tr><td>' + new Date(data.log[i].datetime).toLocaleString() + '</td><td>' + (data.log[i].type == 2 ? '<span class="label label-success">恢复</span>' : '<span class="label label-danger">异常</span>') + '</td><td>' + data.log[i].duration + '</td></tr>');
-        }
-        $tpl.find('.panel-footer').html(data.note);
+
+        // 处理日志区域：由于 API 未返回具体日志条目，这里清空或给个提示
+        $log.html('<tr><td colspan="3" class="text-center text-muted">暂无详细告警日志</td></tr>');
+        
+        // 底部显示目标 URL
+        $tpl.find('.panel-footer').html(data.url);
         
         $_container.append($tpl);
         showarr.push($tpl);
-        _loaded++;
-        if (_loaded == __apiKeys.length) {
-            finish();
-        }
     }
 
     function finish() {
         if (error) {
-            $_mainstatus.html('<i class="glyphicon glyphicon-remove-circle"></i> 错误');
-            $_mainstatusSyle.css("background",'linear-gradient(red, #ffb6b6);');
+            $_mainstatus.html('<i class="glyphicon glyphicon-remove-circle"></i> 发生错误');
+            $_mainstatusSyle.css("background", 'linear-gradient(red, #ffb6b6)');
         } else {
-            $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 正常');
-            $_mainstatusSyle.css("background",'');
+            $_mainstatus.html('<i class="glyphicon glyphicon-ok-circle"></i> 全部正常');
+            $_mainstatusSyle.css("background", "");
         }
         _start = Date.now();
         $_lastUpdate.html('<i class="glyphicon glyphicon-time"></i> 最后更新: ' + new Date().toLocaleString());
+        
+        clearInterval(_intervalId);
         _intervalId = setInterval(countdown, 1000);
     }
 
@@ -280,8 +218,6 @@ myApp.dashboard = (function($) {
         if (left <= 0) {
             clearInterval(_intervalId);
             init();
-        } else {
-            //$$_countdown.html(left);
         }
     }
 
@@ -291,4 +227,4 @@ myApp.dashboard = (function($) {
 
 })(jQuery);
 
-jQuery(myApp.dashboard.init());
+jQuery(myApp.dashboard.init); // 修复：这里直接传入函数引用即可，不要加 () 执行它
