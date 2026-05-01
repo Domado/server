@@ -22,7 +22,11 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
-
+body{
+filter: blur(0px)!important;
+    opacity: 1!important;
+	
+}
 body, html { font-size: 100%; 	padding: 0; margin: 0;}
 
 /* Reset */
